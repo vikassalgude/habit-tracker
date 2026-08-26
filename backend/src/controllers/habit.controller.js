@@ -1,6 +1,7 @@
 import { DateTime } from 'luxon';
 import prisma from '../lib/prisma.js';
 import { computeStreaks } from '../lib/streaks.js';
+import { validateCheckInDate } from '../lib/validation.js';
 
 /**
  * Get todayLocal for the requesting user's timezone.
@@ -136,14 +137,10 @@ export async function createCheckIn(req, res) {
     const todayLocal = getTodayLocal(req.user.timezone);
     const date = req.body.date || todayLocal;
 
-    // Validate: no future dates
-    if (date > todayLocal) {
-      return res.status(400).json({ error: 'Cannot log a future date' });
-    }
-
-    // Validate date format
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-      return res.status(400).json({ error: 'date must be in YYYY-MM-DD format' });
+    // Validate date: format + no future dates
+    const { valid, error: dateError } = validateCheckInDate(date, todayLocal);
+    if (!valid) {
+      return res.status(400).json({ error: dateError });
     }
 
     // Verify the habit belongs to this user
