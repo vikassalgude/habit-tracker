@@ -1,0 +1,39 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  timezone     String   // IANA tz, e.g. "Asia/Kolkata" — assigned at registration
+  createdAt    DateTime @default(now())
+  habits       Habit[]
+}
+
+model Habit {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  createdAt DateTime  @default(now())
+  checkIns  CheckIn[]
+}
+
+model CheckIn {
+  id        String   @id @default(cuid())
+  habitId   String
+  habit     Habit    @relation(fields: [habitId], references: [id], onDelete: Cascade)
+  localDate DateTime @db.Date   // calendar date only, NOT a timestamp
+  createdAt DateTime @default(now())
+
+  @@unique([habitId, localDate])
+}
