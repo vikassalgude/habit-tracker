@@ -6,6 +6,7 @@ import {
   getHabit,
   deleteHabit,
   createCheckIn,
+  getTodayLocal,
 } from '../controllers/habit.controller.js';
 
 const router = express.Router();
@@ -13,6 +14,7 @@ const router = express.Router();
 // All habit routes require auth
 router.use(verifyJWT);
 
+router.get('/today-local', getTodayLocal);
 router.get('/', getHabits);
 router.post('/', createHabit);
 router.get('/:id', getHabit);

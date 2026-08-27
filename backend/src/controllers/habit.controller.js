@@ -4,10 +4,10 @@ import { computeStreaks } from '../lib/streaks.js';
 import { validateCheckInDate } from '../lib/validation.js';
 
 /**
- * Get todayLocal for the requesting user's timezone.
+ * Internal: Get todayLocal string for a given timezone.
  * This is the single source of truth — never use new Date() or browser time.
  */
-function getTodayLocal(timezone) {
+function getLocalDate(timezone) {
   return DateTime.now().setZone(timezone).toISODate();
 }
 
@@ -31,10 +31,16 @@ function formatDate(date) {
   return DateTime.fromJSDate(date).toISODate();
 }
 
+// ─── GET /api/habits/today-local ─────────────────────────────────────────────
+export function getTodayLocal(req, res) {
+  const todayLocal = getLocalDate(req.user.timezone);
+  return res.status(200).json({ todayLocal });
+}
+
 // ─── GET /api/habits ─────────────────────────────────────────────────────────
 export async function getHabits(req, res) {
   try {
-    const todayLocal = getTodayLocal(req.user.timezone);
+    const todayLocal = getLocalDate(req.user.timezone);
 
     const habits = await prisma.habit.findMany({
       where: { userId: req.user.id },
@@ -84,7 +90,7 @@ export async function createHabit(req, res) {
 // ─── GET /api/habits/:id ─────────────────────────────────────────────────────
 export async function getHabit(req, res) {
   try {
-    const todayLocal = getTodayLocal(req.user.timezone);
+    const todayLocal = getLocalDate(req.user.timezone);
 
     const habit = await prisma.habit.findFirst({
       where: { id: req.params.id, userId: req.user.id },
@@ -134,7 +140,7 @@ export async function deleteHabit(req, res) {
 // ─── POST /api/habits/:id/checkins ───────────────────────────────────────────
 export async function createCheckIn(req, res) {
   try {
-    const todayLocal = getTodayLocal(req.user.timezone);
+    const todayLocal = getLocalDate(req.user.timezone);
     const date = req.body.date || todayLocal;
 
     // Validate date: format + no future dates
